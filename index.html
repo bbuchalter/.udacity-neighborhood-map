@@ -15,6 +15,14 @@
       };
       var map = new google.maps.Map(document.getElementById('map-canvas'),
         mapOptions);
+
+      var homeMakerPosition = new google.maps.LatLng(18.35269, -64.7314672);
+      var homeMarker = new google.maps.Marker({
+        position: homeMakerPosition,
+        title: 'Home'
+      });
+
+      homeMarker.setMap(map);
     }
     google.maps.event.addDomListener(window, 'load', initialize);
   </script>
