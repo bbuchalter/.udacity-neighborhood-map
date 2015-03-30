@@ -31,12 +31,25 @@
     this.mapDomId = ko.observable(mapData.mapCanvasId);
     this.mapOptions = ko.observable(mapData.options);
     this.locations = ko.observableArray(mapData.places);
+    this.markers = ko.observableArray([]);
     this.mapMode = ko.observable(true);
     this.listMode = ko.observable(false);
 
     this.toggleView = function() {
       this.mapMode( !this.mapMode() );
       this.listMode( !this.listMode() );
+    };
+
+    this.hideAllMarkers = function() {
+      self.markers().forEach(function(marker) {
+        marker.setMap(undefined);
+      });
+    };
+
+    this.showAllMarkers = function() {
+      self.markers().forEach(function(marker) {
+        marker.setMap(self.map());
+      });
     };
 
     this.renderMarkers = function() {
@@ -46,6 +59,7 @@
           position: markerPosition,
           title: markerDatum.title
         });
+        self.markers.push(marker)
         marker.setMap(self.map());
       }, self);
     };

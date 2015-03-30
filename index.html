@@ -8,6 +8,8 @@
 </head>
 <body>
   <button data-bind="click: toggleView">Toggle</button>
+  <button data-bind="click: hideAllMarkers">Hide All</button>
+  <button data-bind="click: showAllMarkers">Show All</button>
   <div id="map-canvas" data-bind="visible: mapMode"></div>
   <ul id="location-list" data-bind="foreach: locations, visible: listMode">
     <li data-bind="text: title"></li>
