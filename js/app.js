@@ -12,7 +12,7 @@
       zoom: 13
     },
 
-    // data for markers
+    // data for locations
     places: [
       {
         title: "Home",
@@ -30,10 +30,17 @@
 
     this.mapDomId = ko.observable(mapData.mapCanvasId);
     this.mapOptions = ko.observable(mapData.options);
-    this.markerData = ko.observableArray(mapData.places);
+    this.locations = ko.observableArray(mapData.places);
+    this.mapMode = ko.observable(true);
+    this.listMode = ko.observable(false);
+
+    this.toggleView = function() {
+      this.mapMode( !this.mapMode() );
+      this.listMode( !this.listMode() );
+    };
 
     this.renderMarkers = function() {
-      this.markerData().forEach(function(markerDatum) {
+      this.locations().forEach(function(markerDatum) {
         var markerPosition = new google.maps.LatLng(markerDatum.position.lat, markerDatum.position.lng);
         var marker = new google.maps.Marker({
           position: markerPosition,
