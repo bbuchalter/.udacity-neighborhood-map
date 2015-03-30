@@ -21,6 +21,10 @@
       {
         title: "Maho Bay Beach",
         position: {lat: 18.3561342, lng: -64.7457178}
+      },
+      {
+        title: "Low Key Watersports",
+        position: {lat: 18.3302373, lng: -64.7963977}
       }
     ]
   };
@@ -34,6 +38,7 @@
     this.markers = ko.observableArray([]);
     this.mapMode = ko.observable(true);
     this.listMode = ko.observable(false);
+    this.searchQuery = ko.observable("");
 
     this.toggleView = function() {
       this.mapMode( !this.mapMode() );
@@ -51,6 +56,25 @@
         marker.setMap(self.map());
       });
     };
+
+    this.searchResults = ko.computed(function() {
+      var searchResults = [];
+
+      console.log('running searchResults')
+      if(self.searchQuery() == "") {
+        // No search query, all markers are search results
+        searchResults = self.markers();
+      } else {
+        // Include only markers whose title contains searchQuery
+        self.markers().forEach(function(marker) {
+          if(marker.title.indexOf(self.searchQuery()) != -1) {
+            searchResults.push(marker);
+          }
+        });
+      }
+
+      return searchResults;
+    }, this);
 
     this.renderMarkers = function() {
       this.locations().forEach(function(markerDatum) {
