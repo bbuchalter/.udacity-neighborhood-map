@@ -67,7 +67,7 @@
       } else {
         // Include only markers whose title contains searchQuery
         self.markers().forEach(function(marker) {
-          if(marker.title.indexOf(self.searchQuery()) != -1) {
+          if(marker.title.toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1) {
             searchResults.push(marker);
           }
         });
