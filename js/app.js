@@ -9,7 +9,7 @@
     // initial map options passed to Google Maps
     options: {
       center: { lat: 18.3356297, lng: -64.7302395},
-      zoom: 13
+      zoom: 12
     },
 
     // data for locations
