@@ -49,7 +49,7 @@
 
     this.mapDomId = ko.observable(mapData.mapCanvasId);
     this.mapOptions = ko.observable(mapData.options);
-    this.map = ko.observable(undefined);
+    this.map = ko.observable(new google.maps.Map(document.getElementById(self.mapDomId()), self.mapOptions()));
     this.markers = ko.observableArray(this.initMarkers(mapData.places));
     this.searchQuery = ko.observable("");
     this.searchQueryHasFocus = ko.observable(false);
@@ -68,23 +68,17 @@
       self.markers().forEach(function(marker) {
         if(self.isMarkerInSearchResults(marker)) {
           searchResults.push(marker);
-          marker.setMap(self.map());
+          marker.setVisible(true);
         } else {
-          marker.setMap(undefined);
+          marker.setVisible(false);
         }
       }, this);
       return searchResults;
     }, this);
 
-
-    this.renderMap = function() {
-      console.log('renderMap');
-      self.map(new google.maps.Map(document.getElementById(self.mapDomId()), self.mapOptions()));
-    };
   };
 
   // bind a new instance of our view model to the page
   var viewModel = new ViewModel(mapData);
   ko.applyBindings(viewModel);
-  viewModel.renderMap();
 }());
