@@ -51,14 +51,7 @@
     this.mapOptions = ko.observable(mapData.options);
     this.map = ko.observable(undefined);
     this.markers = ko.observableArray(this.initMarkers(mapData.places));
-    this.mapMode = ko.observable(true);
-    this.listMode = ko.observable(false);
     this.searchQuery = ko.observable("");
-
-    this.toggleView = function() {
-      this.mapMode( !this.mapMode() );
-      this.listMode( !this.listMode() );
-    };
 
     this.isMarkerInSearchResults = function(marker) {
       var result = marker.title.toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1;

@@ -7,12 +7,15 @@
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-  <button data-bind="click: toggleView">Toggle</button>
-  <input type="text" data-bind="textInput: searchQuery">
-  <div id="map-canvas" data-bind="visible: mapMode"></div>
-  <ul id="location-list" data-bind="foreach: searchResults, visible: listMode">
-    <li data-bind="text: title"></li>
-  </ul>
+  <div class="location-list">
+    <div class="searchQuery">
+      Search: <input type="text" data-bind="textInput: searchQuery">
+    </div>
+    <ul data-bind="foreach: searchResults">
+      <li data-bind="text: title"></li>
+    </ul>
+  </div>
+  <div id="map-canvas"></div>
   <script type="text/javascript"
           src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4dPe_yN-2mi8CPVDkkK3Nyfa_VZUvFZo">
   </script>
