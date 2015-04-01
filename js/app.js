@@ -35,15 +35,37 @@
 
     this.initMarkers = function(locations) {
       var markers = [];
+
       locations.forEach(function(markerDatum) {
+        // Create Google LatLng object to position marker.
         var markerPosition = new google.maps.LatLng(markerDatum.position.lat, markerDatum.position.lng);
+
+        // Create Google InfoWindow object to define content for marker when clicked.
+        var infoWindow = new google.maps.InfoWindow({
+          content: markerDatum.title
+        });
+
+        //Create Google Marker object to place on map
         var marker = new google.maps.Marker({
           position: markerPosition,
           title: markerDatum.title
         });
+
+        // Attach the infoWindow directly to the marker
+        marker.infoWindow = infoWindow;
+
+        // Place the marker on the map
         marker.setMap(self.map());
+
+        // Add event listener to show InfoWindow when Marker clicked
+        google.maps.event.addListener(marker, 'click', function() {
+          infoWindow.open(self.map(), marker);
+        });
+
+        // Include in list of markers
         markers.push(marker)
       }, this);
+
       return markers;
     };
 
@@ -63,6 +85,10 @@
       return result;
     };
 
+    this.openMarkerInfo = function(marker) {
+      marker.infoWindow.open(self.map(), marker)
+    };
+
     this.searchResults = ko.computed(function() {
       var searchResults = [];
       self.markers().forEach(function(marker) {
@@ -76,6 +102,10 @@
       return searchResults;
     }, this);
 
+    // Add event listener to close search results when Map clicked
+    google.maps.event.addListener(self.map(), 'click', function() {
+      self.setSearchQueryHasFocus(false);
+    });
   };
 
   // bind a new instance of our view model to the page

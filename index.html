@@ -8,12 +8,12 @@
 </head>
 <body>
   <div class="search">
-    Search: <input type="text" data-bind="textInput: searchQuery, event: { focus: setSearchQueryHasFocus, blur: setSearchQueryHasFocus }">
+    Search: <input type="text" data-bind="textInput: searchQuery, event: { focus: setSearchQueryHasFocus }">
   </div>
   <div class="container">
     <div class="location-list" data-bind="visible: searchQueryHasFocus">
       <ul data-bind="foreach: searchResults">
-        <li data-bind="text: title"></li>
+        <li data-bind="text: title, click: $parent.openMarkerInfo"></li>
       </ul>
     </div>
     <div class="map-container">
