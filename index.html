@@ -7,15 +7,19 @@
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
-  <div class="location-list">
-    <div class="searchQuery">
-      Search: <input type="text" data-bind="textInput: searchQuery">
-    </div>
-    <ul data-bind="foreach: searchResults">
-      <li data-bind="text: title"></li>
-    </ul>
+  <div class="search">
+    Search: <input type="text" data-bind="textInput: searchQuery, event: { focus: setSearchQueryHasFocus, blur: setSearchQueryHasFocus }">
   </div>
-  <div id="map-canvas"></div>
+  <div class="container">
+    <div class="location-list" data-bind="visible: searchQueryHasFocus">
+      <ul data-bind="foreach: searchResults">
+        <li data-bind="text: title"></li>
+      </ul>
+    </div>
+    <div class="map-container">
+      <div id="map-canvas"></div>
+    </div>
+  </div>
   <script type="text/javascript"
           src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4dPe_yN-2mi8CPVDkkK3Nyfa_VZUvFZo">
   </script>

@@ -1,14 +1,36 @@
-html, body, #map-canvas, .location-list {
-    height: 100%;
-    margin: 0;
+* {
     padding: 0;
+    margin: 0;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+.search {
+    width: 100%;
 }
 
 #map-canvas {
-    margin-left: 20%;
+    width: 100%;
+    height: 100%;
+}
+
+.container {
+    width: 100%;
+    height: 100%;
 }
 
 .location-list {
-    float: left;
-    width: 20%;
+    width: 100%;
+    height: auto;
+    position: fixed;
+    z-index: 1000;
+    background-color: white;
+}
+
+.map-container {
+    width: 100%;
+    height: 100%;
 }

@@ -52,6 +52,10 @@
     this.map = ko.observable(undefined);
     this.markers = ko.observableArray(this.initMarkers(mapData.places));
     this.searchQuery = ko.observable("");
+    this.searchQueryHasFocus = ko.observable(false);
+    this.setSearchQueryHasFocus = function() {
+      self.searchQueryHasFocus(!self.searchQueryHasFocus());
+    };
 
     this.isMarkerInSearchResults = function(marker) {
       var result = marker.title.toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1;
