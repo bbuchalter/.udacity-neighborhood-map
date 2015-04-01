@@ -8,10 +8,10 @@
 </head>
 <body>
   <div class="search">
-    Search: <input type="text" data-bind="textInput: searchQuery, event: { focus: setSearchQueryHasFocus }">
+    Search: <input type="text" data-bind="textInput: searchQuery, event: { focus: showList }">
   </div>
   <div class="container">
-    <div class="location-list" data-bind="visible: searchQueryHasFocus">
+    <div class="location-list" data-bind="visible: listVisible">
       <ul data-bind="foreach: searchResults">
         <li data-bind="text: title, click: $parent.openMarkerInfo"></li>
       </ul>

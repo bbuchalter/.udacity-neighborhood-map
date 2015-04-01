@@ -74,10 +74,7 @@
     this.map = ko.observable(new google.maps.Map(document.getElementById(self.mapDomId()), self.mapOptions()));
     this.markers = ko.observableArray(this.initMarkers(mapData.places));
     this.searchQuery = ko.observable("");
-    this.searchQueryHasFocus = ko.observable(false);
-    this.setSearchQueryHasFocus = function() {
-      self.searchQueryHasFocus(!self.searchQueryHasFocus());
-    };
+    this.listVisible = ko.observable(false);
 
     this.isMarkerInSearchResults = function(marker) {
       var result = marker.title.toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1;
@@ -102,9 +99,17 @@
       return searchResults;
     }, this);
 
+    this.hideList = function() {
+      self.listVisible(false);
+    };
+
+    this.showList = function() {
+      self.listVisible(true);
+    };
+
     // Add event listener to close search results when Map clicked
     google.maps.event.addListener(self.map(), 'click', function() {
-      self.setSearchQueryHasFocus(false);
+      self.hideList();
     });
   };
 
