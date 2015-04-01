@@ -32,10 +32,25 @@
   var ViewModel = function (mapData) {
     var self = this;
 
+
+    this.initMarkers = function(locations) {
+      var markers = [];
+      locations.forEach(function(markerDatum) {
+        var markerPosition = new google.maps.LatLng(markerDatum.position.lat, markerDatum.position.lng);
+        var marker = new google.maps.Marker({
+          position: markerPosition,
+          title: markerDatum.title
+        });
+        marker.setMap(self.map());
+        markers.push(marker)
+      }, this);
+      return markers;
+    };
+
     this.mapDomId = ko.observable(mapData.mapCanvasId);
     this.mapOptions = ko.observable(mapData.options);
-    this.locations = ko.observableArray(mapData.places);
-    this.markers = ko.observableArray([]);
+    this.map = ko.observable(undefined);
+    this.markers = ko.observableArray(this.initMarkers(mapData.places));
     this.mapMode = ko.observable(true);
     this.listMode = ko.observable(false);
     this.searchQuery = ko.observable("");
@@ -45,55 +60,29 @@
       this.listMode( !this.listMode() );
     };
 
-    this.hideAllMarkers = function() {
-      self.markers().forEach(function(marker) {
-        marker.setMap(undefined);
-      });
-    };
-
-    this.showAllMarkers = function() {
-      self.markers().forEach(function(marker) {
-        marker.setMap(self.map());
-      });
+    this.isMarkerInSearchResults = function(marker) {
+      var result = marker.title.toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1;
+      console.log("isMarkerInSearchResults", marker, result);
+      return result;
     };
 
     this.searchResults = ko.computed(function() {
       var searchResults = [];
-
-      console.log('running searchResults')
-      if(self.searchQuery() == "") {
-        // No search query, all markers are search results
-        searchResults = self.markers();
-      } else {
-        // Include only markers whose title contains searchQuery
-        self.markers().forEach(function(marker) {
-          if(marker.title.toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1) {
-            searchResults.push(marker);
-          }
-        });
-      }
-
+      self.markers().forEach(function(marker) {
+        if(self.isMarkerInSearchResults(marker)) {
+          searchResults.push(marker);
+          marker.setMap(self.map());
+        } else {
+          marker.setMap(undefined);
+        }
+      }, this);
       return searchResults;
     }, this);
 
-    this.renderMarkers = function() {
-      this.locations().forEach(function(markerDatum) {
-        var markerPosition = new google.maps.LatLng(markerDatum.position.lat, markerDatum.position.lng);
-        var marker = new google.maps.Marker({
-          position: markerPosition,
-          title: markerDatum.title
-        });
-        self.markers.push(marker)
-        marker.setMap(self.map());
-      }, self);
-    };
-
 
     this.renderMap = function() {
-      self.map = ko.observable(new google.maps.Map(document.getElementById(self.mapDomId()),
-        self.mapOptions()));
-
-      self.renderMarkers();
+      console.log('renderMap');
+      self.map(new google.maps.Map(document.getElementById(self.mapDomId()), self.mapOptions()));
     };
   };
 

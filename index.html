@@ -8,8 +8,6 @@
 </head>
 <body>
   <button data-bind="click: toggleView">Toggle</button>
-  <button data-bind="click: hideAllMarkers">Hide All</button>
-  <button data-bind="click: showAllMarkers">Show All</button>
   <input type="text" data-bind="textInput: searchQuery">
   <div id="map-canvas" data-bind="visible: mapMode"></div>
   <ul id="location-list" data-bind="foreach: searchResults, visible: listMode">
