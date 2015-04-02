@@ -14,7 +14,7 @@
     <div class="location-list" data-bind="visible: listVisible">
       <a class="close" data-bind="click: hideList">Close</a>
       <ul data-bind="foreach: markerSearchResults">
-        <li data-bind="text: title, click: $parent.setCurrentMarker"></li>
+        <li data-bind="text: title, click: $parent.setCurrentLocation"></li>
       </ul>
     </div>
     <div class="map-container">

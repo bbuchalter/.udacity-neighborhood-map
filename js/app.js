@@ -13,7 +13,7 @@
     }
   };
 
-  var locationData = [
+  var markerData = [
     {
       title: "Home",
       position: {lat: 18.35269, lng: -64.7314672}
@@ -31,20 +31,20 @@
   var MapViewModel = function (mapData) {
     var self = this;
 
-    this.mapDomId = ko.observable(mapData.mapCanvasId);
-    this.mapOptions = ko.observable(mapData.options);
-    this.googleMap = new google.maps.Map(document.getElementById(self.mapDomId()), self.mapOptions());
+    this.googleMap = new google.maps.Map(document.getElementById(mapData.mapCanvasId), mapData.options);
+
+    this.addMarker = function(marker) {
+      marker.setMap(self.googleMap);
+    };
   };
 
-  var MarkerViewModel = function(locationData, map, infoWindow) {
+  var MarkerViewModel = function(title, lat, lng) {
     var self = this;
 
     // Create Google LatLng object to position marker.
-    this.title = locationData.title;
-    this.markerPosition = new google.maps.LatLng(locationData.position.lat, locationData.position.lng);
-    this.map = map;
-    this.infoWindow = infoWindow;
-    this.active = ko.observable(false);
+    this.title = title;
+    this.markerPosition = new google.maps.LatLng(lat, lng);
+    this.selected = ko.observable(false);
 
     //Create Google Marker object to place on map
     this.googleMarker = new google.maps.Marker({
@@ -56,27 +56,22 @@
       self.googleMarker.setVisible(visibility);
     };
 
-    this.showInfo = function() {
-      console.log("show info", self);
+    this.setSelected = function(selected) {
+      self.selected(selected);
     };
 
-    this.setActive = function(active) {
-      self.active(active);
-    };
-
-    this.state = ko.computed(function() {
-      if(self.active()) {
-        self.googleMarker.setOpacity(1);
-        self.infoWindow.open(self);
+    this.selectedState = ko.computed(function() {
+      if(self.selected()) {
+       self.googleMarker.setOpacity(1);
       }
       else {
-        self.infoWindow.close();
         self.googleMarker.setOpacity(0.5);
       }
     });
 
-    // Place the marker on the map
-    self.googleMarker.setMap(self.map.googleMap);
+    this.setMap = function(map) {
+      self.googleMarker.setMap(map);
+    };
   };
 
   var InfoWindowViewModel = function(title) {
@@ -126,23 +121,78 @@
       self.googleInfoWindow.close();
     };
 
-    this.open = function(marker) {
-      self.googleInfoWindow.open(marker.map.googleMap, marker.googleMarker);
-    }
+    this.open = function(googleMap, googleMarker) {
+      self.googleInfoWindow.open(googleMap, googleMarker);
+    };
 
     self.populateInfoWindow();
   };
 
-  var SearchViewModel = function(markers) {
+  var LocationViewModel = function(marker, infoWindow, map) {
     var self = this;
-    this.markers = markers;
+
+    this.active = ko.observable(false);
+    this.visible = ko.observable(true);
+    this.marker = ko.observable(marker);
+    this.infoWindow = ko.observable(infoWindow);
+    this.map = ko.observable(map);
+
+    this.title = ko.computed(function() {
+      return self.marker().title;
+    });
+
+    this.googleMarker = function() {
+      return self.marker().googleMarker;
+    };
+
+    this.googleInfoWindow = function() {
+      return self.infoWindow().googleInfoWindow;
+    };
+
+    this.googleMap = function() {
+      return self.map().googleMap;
+    }
+
+    this.setActive = function(active) {
+      self.active(active);
+    };
+
+    this.setVisible = function(visible) {
+      self.visible(visible);
+    };
+
+    this.visibleState = ko.computed(function() {
+      if(self.visible()) {
+        self.marker().setVisible(true);
+      }
+      else {
+        self.marker().setVisible(false);
+        self.setActive(false); // invisible markers can't be active
+      }
+    });
+
+    this.selectionState = ko.computed(function() {
+      if(self.active()) {
+        self.marker().setSelected(true);
+        self.infoWindow().open(self.googleMap(), self.googleMarker());
+      } else {
+        self.marker().setSelected(false);
+        self.infoWindow().close();
+      }
+    });
+  };
+
+
+  var SearchViewModel = function(locations) {
+    var self = this;
+    this.locations = locations;
     this.searchQuery = ko.observable("");
     this.listVisible = ko.observable(false);
-    this.currentMarker = ko.observable(null);
+    this.currentLocation = ko.observable(null);
 
-    this.isMarkerInSearchResults = function(marker) {
+    this.isLocationInSearchResults = function(location) {
       // Simple case-insensitive title string search
-      return marker.title.toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1;
+      return location.title().toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1;
     };
 
     this.markerSearchResults = ko.computed(function() {
@@ -150,18 +200,18 @@
       var markerSearchResults = [];
 
       // For each marker
-      self.markers.forEach(function(marker) {
+      self.locations.forEach(function(location) {
 
-        // If the marker should be part of search results
+        // If the location should be part of search results
         // Include it and make it visible on the map
-        if(self.isMarkerInSearchResults(marker)) {
-          markerSearchResults.push(marker);
-          marker.setVisible(true);
+        if(self.isLocationInSearchResults(location)) {
+          markerSearchResults.push(location);
+          location.setVisible(true);
         }
 
-        // Otherwise, exclude it and hide on the map
+        // Otherwise, exclude it and hide on the map along with it's infowindow
         else {
-          marker.setVisible(false);
+          location.setVisible(false);
         }
       });
 
@@ -176,46 +226,54 @@
       self.listVisible(true);
     };
 
-    this.hideAllMarkerInfo = function() {
-      self.markers.forEach(function(marker) {
-        marker.setActive(false);
+    this.setCurrentLocation = function(location) {
+      self.currentLocation(location);
+    };
+
+    this.locationState = ko.computed(function() {
+      self.locations.forEach(function(location) {
+        if(location == self.currentLocation()) {
+          location.setActive(true);
+        }
+        else {
+          location.setActive(false);
+        }
       });
-    };
-
-    this.setCurrentMarker = function(marker) {
-      self.currentMarker(marker);
-    };
-
-    this.showMarkerInfo = ko.computed(function() {
-      if(self.currentMarker()) {
-        self.hideAllMarkerInfo();
-        self.currentMarker().setActive(true);
-      }
     });
 
 
     // For each marker
-    this.markers.forEach(function(marker) {
+    this.locations.forEach(function(location) {
 
-      // Add click event listener
-      google.maps.event.addListener(marker.googleMarker, 'click', function() {
+      // Add click event listener on marker
+      google.maps.event.addListener(location.googleMarker(), 'click', function() {
 
-        // To set the current marker
-        self.setCurrentMarker(marker);
+        // To set the current location
+        self.setCurrentLocation(location);
+      });
+
+      // Add click event listener on infowindow close
+      google.maps.event.addListener(location.googleInfoWindow(), 'closeclick', function() {
+
+        // To set the current marker to null
+        self.setCurrentLocation(null);
       });
     });
   };
 
   // bind a new instance of our view model to the page
-  var mapViewModel = new MapViewModel(mapData);
-  var markers = [];
+  var map = new MapViewModel(mapData);
+  var locations = [];
 
-  locationData.forEach(function(locationDatum) {
-    var infoWindowViewModel = new InfoWindowViewModel(locationDatum.title);
-    var markerViewModel = new MarkerViewModel(locationDatum, this, infoWindowViewModel);
-    markers.push(markerViewModel);
-  }, mapViewModel);
+  markerData.forEach(function(markerDatum) {
+    var infoWindow = new InfoWindowViewModel(markerDatum.title);
+    var marker = new MarkerViewModel(markerDatum.title, markerDatum.position.lat, markerDatum.position.lng);
+    var location = new LocationViewModel(marker, infoWindow, map);
 
-  var searchViewModel = new SearchViewModel(markers);
+    locations.push(location);
+    map.addMarker(marker);
+  });
+
+  var searchViewModel = new SearchViewModel(locations);
   ko.applyBindings(searchViewModel);
 }());
