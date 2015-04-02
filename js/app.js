@@ -34,16 +34,6 @@
     this.mapDomId = ko.observable(mapData.mapCanvasId);
     this.mapOptions = ko.observable(mapData.options);
     this.googleMap = new google.maps.Map(document.getElementById(self.mapDomId()), self.mapOptions());
-
-    //this.openMarkerInfo = function(marker) {
-    //  self.markers().forEach(function(marker) {
-    //    marker.infoWindow.close();
-    //    marker.setOpacity(0.5);
-    //  });
-    //
-    //  marker.infoWindow.open(self.map, marker);
-    //  marker.setOpacity(1);
-    //};
   };
 
   var MarkerViewModel = function(locationData, map, infoWindow) {
@@ -54,6 +44,7 @@
     this.markerPosition = new google.maps.LatLng(locationData.position.lat, locationData.position.lng);
     this.map = map;
     this.infoWindow = infoWindow;
+    this.active = ko.observable(false);
 
     //Create Google Marker object to place on map
     this.googleMarker = new google.maps.Marker({
@@ -69,22 +60,37 @@
       console.log("show info", self);
     };
 
+    this.setActive = function(active) {
+      self.active(active);
+    };
+
+    this.state = ko.computed(function() {
+      if(self.active()) {
+        self.googleMarker.setOpacity(1);
+        self.infoWindow.open(self);
+      }
+      else {
+        self.infoWindow.close();
+        self.googleMarker.setOpacity(0.5);
+      }
+    });
+
     // Place the marker on the map
     self.googleMarker.setMap(self.map.googleMap);
   };
 
-  var InfoWindowViewModel = function(marker) {
+  var InfoWindowViewModel = function(title) {
     var self = this;
 
     // Create Google InfoWindow object to define content for marker when clicked.
     this.googleInfoWindow = new google.maps.InfoWindow();
-    this.marker = marker;
+    this.title = title;
 
     this.setInfoWindowContent = function(searchResults) {
       var containerNode = document.createElement("div");
 
       var titleNode = document.createElement("h1");
-      titleNode.textContent = this.marker.title;
+      titleNode.textContent = this.title;
       containerNode.appendChild(titleNode);
 
       var imgSearchResults = JSON.parse(searchResults);
@@ -98,7 +104,7 @@
     };
 
     this.populateInfoWindow = function() {
-      var queryUrl = 'https://www.googleapis.com/customsearch/v1?key=AIzaSyC4dPe_yN-2mi8CPVDkkK3Nyfa_VZUvFZo&cx=009193896825055063209:rbnrlbobrz4&q=' + self.marker.title + ' St. John USVI&searchType=image&fileType=jpg&imgSize=small&alt=json&fields=items/link';
+      var queryUrl = 'https://www.googleapis.com/customsearch/v1?key=AIzaSyC4dPe_yN-2mi8CPVDkkK3Nyfa_VZUvFZo&cx=009193896825055063209:rbnrlbobrz4&q=' + self.title + ' St. John USVI&searchType=image&fileType=jpg&imgSize=small&alt=json&fields=items/link';
       var searchCache = localStorage.getItem(queryUrl);
       if(searchCache) {
         self.setInfoWindowContent(searchCache);
@@ -106,7 +112,7 @@
       else {
         promise.get(queryUrl).then(function(error, text, xhr) {
           if (error) {
-            infoWindow.setContent("There was a problem searching for content for '" + markerDatum.title+ "'. Please try again.");
+            infoWindow.setContent("There was a problem searching for content for '" + self.title+ "'. Please try again.");
           }
           else {
             localStorage.setItem(queryUrl, text); // Cache search result
@@ -115,6 +121,14 @@
         });
       }
     };
+
+    this.close = function() {
+      self.googleInfoWindow.close();
+    };
+
+    this.open = function(marker) {
+      self.googleInfoWindow.open(marker.map.googleMap, marker.googleMarker);
+    }
 
     self.populateInfoWindow();
   };
@@ -163,7 +177,9 @@
     };
 
     this.hideAllMarkerInfo = function() {
-      console.log('close all marker info');
+      self.markers.forEach(function(marker) {
+        marker.setActive(false);
+      });
     };
 
     this.setCurrentMarker = function(marker) {
@@ -171,8 +187,10 @@
     };
 
     this.showMarkerInfo = ko.computed(function() {
-      self.hideAllMarkerInfo();
-      console.log('show marker info for', self.currentMarker());
+      if(self.currentMarker()) {
+        self.hideAllMarkerInfo();
+        self.currentMarker().setActive(true);
+      }
     });
 
 
@@ -193,8 +211,8 @@
   var markers = [];
 
   locationData.forEach(function(locationDatum) {
-    var markerViewModel = new MarkerViewModel(locationDatum, this);
-    var infoWindowViewModel = new InfoWindowViewModel(markerViewModel);
+    var infoWindowViewModel = new InfoWindowViewModel(locationDatum.title);
+    var markerViewModel = new MarkerViewModel(locationDatum, this, infoWindowViewModel);
     markers.push(markerViewModel);
   }, mapViewModel);
 
