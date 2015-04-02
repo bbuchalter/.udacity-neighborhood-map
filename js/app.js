@@ -87,7 +87,11 @@
 
     this.setVisible = function(visibility) {
       self.googleMarker.setVisible(visibility);
-    }
+    };
+
+    this.showInfo = function() {
+      console.log("show info", self);
+    };
 
     // Place the marker on the map
     self.googleMarker.setMap(self.map.googleMap);
@@ -146,21 +150,32 @@
     this.listVisible = ko.observable(false);
 
     this.isMarkerInSearchResults = function(marker) {
+      // Simple case-insensitive title string search
       return marker.title.toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1;
     };
 
-    this.searchResults = ko.computed(function() {
-      var searchResults = [];
+    this.markerSearchResults = ko.computed(function() {
+      // Initialize a new set of results
+      var markerSearchResults = [];
+
+      // For each marker
       self.markers.forEach(function(marker) {
+
+        // If the marker should be part of search results
+        // Include it and make it visible on the map
         if(self.isMarkerInSearchResults(marker)) {
-          searchResults.push(marker);
+          markerSearchResults.push(marker);
           marker.setVisible(true);
-        } else {
+        }
+
+        // Otherwise, exclude it and hide on the map
+        else {
           marker.setVisible(false);
         }
-      }, this);
-      return searchResults;
-    }, this);
+      });
+
+      return markerSearchResults;
+    });
 
     this.hideList = function() {
       self.listVisible(false);
@@ -169,6 +184,15 @@
     this.showList = function() {
       self.listVisible(true);
     };
+
+    this.hideAllMarkerInfo = function() {
+      console.log('close all marker info');
+    }
+
+    this.showMarkerInfo = function(marker) {
+      self.hideAllMarkerInfo();
+      console.log('show marker info for', marker);
+    }
   };
 
   // bind a new instance of our view model to the page
