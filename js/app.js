@@ -204,6 +204,11 @@
       self.listVisible(true);
     };
 
+    this.reset = function() {
+      self.searchQuery("");
+      self.currentLocation(null);
+    }
+
     this.setCurrentLocation = function(location) {
       self.currentLocation(location);
     };

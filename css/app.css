@@ -30,7 +30,7 @@ body {
     background-color: white;
 }
 
-.location-list .close {
+.location-list .close, .location-list .reset {
     float: right;
 }
 
