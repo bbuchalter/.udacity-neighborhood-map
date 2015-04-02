@@ -45,6 +45,42 @@
           content: markerDatum.title
         });
 
+        var setInfoWindowContent = function(infoWindow, searchResults) {
+          var infoWindowContentNode = document.createElement("div");
+
+          var titleNode = document.createElement("h1");
+          titleNode.textContent = markerDatum.title;
+          infoWindowContentNode.appendChild(titleNode);
+
+          var imgSearchResults = JSON.parse(searchResults);
+          imgSearchResults.items.forEach(function(searchResult) {
+            var imageNode = document.createElement("img");
+            imageNode.src = searchResult.link;
+            infoWindowContentNode.appendChild(imageNode);
+          }, this);
+
+          infoWindow.setContent(infoWindowContentNode);
+        };
+
+
+        var queryUrl = 'https://www.googleapis.com/customsearch/v1?key=AIzaSyC4dPe_yN-2mi8CPVDkkK3Nyfa_VZUvFZo&cx=009193896825055063209:rbnrlbobrz4&q=' + markerDatum.title + ' St. John USVI&searchType=image&fileType=jpg&imgSize=small&alt=json&fields=items/link';
+        var searchCache = localStorage.getItem(queryUrl);
+        if(searchCache) {
+          setInfoWindowContent(infoWindow, searchCache);
+        }
+        else {
+          promise.get(queryUrl).then(function(error, text, xhr) {
+            if (error) {
+              infoWindow.setContent("There was a problem searching for content for '" + markerDatum.title+ "'. Please try again.");
+            }
+            else {
+              localStorage.setItem(queryUrl, text); // Cache search result
+              setInfoWindowContent(infoWindow, text);
+            }
+          });
+        }
+
+
         //Create Google Marker object to place on map
         var marker = new google.maps.Marker({
           position: markerPosition,
@@ -78,12 +114,17 @@
 
     this.isMarkerInSearchResults = function(marker) {
       var result = marker.title.toLowerCase().indexOf(self.searchQuery().toLowerCase()) != -1;
-      console.log("isMarkerInSearchResults", marker, result);
       return result;
     };
 
     this.openMarkerInfo = function(marker) {
-      marker.infoWindow.open(self.map(), marker)
+      self.markers().forEach(function(marker) {
+        marker.infoWindow.close();
+        marker.setOpacity(0.5);
+      });
+
+      marker.infoWindow.open(self.map(), marker);
+      marker.setOpacity(1);
     };
 
     this.searchResults = ko.computed(function() {
@@ -114,6 +155,6 @@
   };
 
   // bind a new instance of our view model to the page
-  var viewModel = new ViewModel(mapData);
-  ko.applyBindings(viewModel);
+  var mapViewModel = new ViewModel(mapData);
+  ko.applyBindings(mapViewModel);
 }());
