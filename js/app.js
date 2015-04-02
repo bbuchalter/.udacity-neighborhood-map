@@ -44,12 +44,6 @@
     //  marker.infoWindow.open(self.map, marker);
     //  marker.setOpacity(1);
     //};
-
-
-    // Add event listener to close search results when Map clicked
-    //google.maps.event.addListener(self.googleMap, 'click', function() {
-    //  self.hideList();
-    //});
   };
 
   var MarkerViewModel = function(locationData, map, infoWindow) {
@@ -181,8 +175,14 @@
       console.log('show marker info for', self.currentMarker());
     });
 
+
+    // For each marker
     this.markers.forEach(function(marker) {
+
+      // Add click event listener
       google.maps.event.addListener(marker.googleMarker, 'click', function() {
+
+        // To set the current marker
         self.setCurrentMarker(marker);
       });
     });

@@ -30,6 +30,10 @@ body {
     background-color: white;
 }
 
+.location-list .close {
+    float: right;
+}
+
 .map-container {
     width: 100%;
     height: 100%;
