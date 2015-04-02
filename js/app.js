@@ -31,24 +31,6 @@
   var MapViewModel = function (mapData) {
     var self = this;
 
-
-    this.initMarkers = function(locations) {
-      var markers = [];
-      //
-      //locations.forEach(function(markerDatum) {
-      //
-      //  // Add event listener to show InfoWindow when Marker clicked
-      //  google.maps.event.addListener(self.googleMarker, 'click', function() {
-      //    self.infoWindow.open(self.map, self.googleMarker);
-      //  });
-      //
-      //  // Include in list of markers
-      //  markers.push(marker)
-      //}, this);
-
-      return markers;
-    };
-
     this.mapDomId = ko.observable(mapData.mapCanvasId);
     this.mapOptions = ko.observable(mapData.options);
     this.googleMap = new google.maps.Map(document.getElementById(self.mapDomId()), self.mapOptions());
@@ -148,6 +130,7 @@
     this.markers = markers;
     this.searchQuery = ko.observable("");
     this.listVisible = ko.observable(false);
+    this.currentMarker = ko.observable(null);
 
     this.isMarkerInSearchResults = function(marker) {
       // Simple case-insensitive title string search
@@ -187,12 +170,22 @@
 
     this.hideAllMarkerInfo = function() {
       console.log('close all marker info');
-    }
+    };
 
-    this.showMarkerInfo = function(marker) {
+    this.setCurrentMarker = function(marker) {
+      self.currentMarker(marker);
+    };
+
+    this.showMarkerInfo = ko.computed(function() {
       self.hideAllMarkerInfo();
-      console.log('show marker info for', marker);
-    }
+      console.log('show marker info for', self.currentMarker());
+    });
+
+    this.markers.forEach(function(marker) {
+      google.maps.event.addListener(marker.googleMarker, 'click', function() {
+        self.setCurrentMarker(marker);
+      });
+    });
   };
 
   // bind a new instance of our view model to the page

@@ -13,7 +13,7 @@
   <div class="container">
     <div class="location-list" data-bind="visible: listVisible">
       <ul data-bind="foreach: markerSearchResults">
-        <li data-bind="text: title, click: $parent.showMarkerInfo"></li>
+        <li data-bind="text: title, click: $parent.setCurrentMarker"></li>
       </ul>
     </div>
     <div class="map-container">
