@@ -1,40 +1,67 @@
 (function() {
   'use strict';
 
-  // initial map and marker data
-  var mapData = {
-    // the dom element to draw the Google Map
-    mapCanvasId: 'map-canvas',
-
-    // initial map options passed to Google Maps
-    options: {
-      center: {lat: 18.3356297, lng: -64.7302395},
-      zoom: 12
-    }
+  var MapViewModel = function (domId, mapOptions) {
+    this.googleMap = new google.maps.Map(document.getElementById(domId), mapOptions);
   };
 
-  var markerData = [
-    {
-      title: "Home",
-      position: {lat: 18.35269, lng: -64.7314672}
-    },
-    {
-      title: "Maho Bay Beach",
-      position: {lat: 18.3561342, lng: -64.7457178}
-    },
-    {
-      title: "Low Key Watersports",
-      position: {lat: 18.3302373, lng: -64.7963977}
-    }
-  ];
-
-  var MapViewModel = function (mapData) {
+  var InfoWindowViewModel = function(title) {
     var self = this;
 
-    this.googleMap = new google.maps.Map(document.getElementById(mapData.mapCanvasId), mapData.options);
+    // Create Google InfoWindow object to define content for marker when clicked.
+    this.googleInfoWindow = new google.maps.InfoWindow();
+    this.title = title;
 
-    this.addMarker = function(marker) {
-      marker.setMap(self.googleMap);
+    this.close = function() {
+      self.googleInfoWindow.close();
+    };
+
+    this.open = function(googleMap, googleMarker) {
+      self.googleInfoWindow.open(googleMap, googleMarker);
+    };
+
+    // Takes image search results data, builds DOM nodes, attaches to infoWindow
+    this.setContentFromSearchResults = function(searchResultsData) {
+      var contentNode = self.buildContentNodeFromSearchResults(searchResultsData);
+      self.googleInfoWindow.setContent(contentNode);
+    };
+
+    // Takes image search results data, builds DOM nodes.
+    this.buildContentNodeFromSearchResults = function(searchResultsData) {
+      var containerNode = document.createElement("div");
+
+      var titleNode = document.createElement("h1");
+      titleNode.textContent = this.title;
+      containerNode.appendChild(titleNode);
+
+      var imgSearchResults = JSON.parse(searchResultsData);
+      imgSearchResults.items.forEach(function(searchResult) {
+        var imageNode = document.createElement("img");
+        imageNode.src = searchResult.link;
+        containerNode.appendChild(imageNode);
+      });
+
+      return containerNode;
+    };
+
+    this.populateContent = function() {
+      var queryUrl = 'https://www.googleapis.com/customsearch/v1?key=AIzaSyC4dPe_yN-2mi8CPVDkkK3Nyfa_VZUvFZo&cx=009193896825055063209:rbnrlbobrz4&q=' + self.title + ' St. John USVI&searchType=image&fileType=jpg&imgSize=small&alt=json&fields=items/link';
+      var searchResultsCache = localStorage.getItem(queryUrl);
+
+      if(searchResultsCache) {
+        self.setContentFromSearchResults(searchResultsCache);
+      }
+      else {
+        promise.get(queryUrl).then(function(error, data, xhr) {
+          if (error) {
+            self.googleInfoWindow.setContent("There was a problem searching for content for '" + self.title + "'. Please try again.");
+          }
+          else {
+            localStorage.setItem(queryUrl, data); // Cache search result
+            self.setContentFromSearchResults(data);
+          }
+        });
+      }
     };
   };
 
@@ -68,66 +95,12 @@
         self.googleMarker.setOpacity(0.5);
       }
     });
-
-    this.setMap = function(map) {
-      self.googleMarker.setMap(map);
-    };
   };
 
-  var InfoWindowViewModel = function(title) {
-    var self = this;
 
-    // Create Google InfoWindow object to define content for marker when clicked.
-    this.googleInfoWindow = new google.maps.InfoWindow();
-    this.title = title;
-
-    this.setInfoWindowContent = function(searchResults) {
-      var containerNode = document.createElement("div");
-
-      var titleNode = document.createElement("h1");
-      titleNode.textContent = this.title;
-      containerNode.appendChild(titleNode);
-
-      var imgSearchResults = JSON.parse(searchResults);
-      imgSearchResults.items.forEach(function(searchResult) {
-        var imageNode = document.createElement("img");
-        imageNode.src = searchResult.link;
-        containerNode.appendChild(imageNode);
-      }, this);
-
-      self.googleInfoWindow.setContent(containerNode);
-    };
-
-    this.populateInfoWindow = function() {
-      var queryUrl = 'https://www.googleapis.com/customsearch/v1?key=AIzaSyC4dPe_yN-2mi8CPVDkkK3Nyfa_VZUvFZo&cx=009193896825055063209:rbnrlbobrz4&q=' + self.title + ' St. John USVI&searchType=image&fileType=jpg&imgSize=small&alt=json&fields=items/link';
-      var searchCache = localStorage.getItem(queryUrl);
-      if(searchCache) {
-        self.setInfoWindowContent(searchCache);
-      }
-      else {
-        promise.get(queryUrl).then(function(error, text, xhr) {
-          if (error) {
-            infoWindow.setContent("There was a problem searching for content for '" + self.title+ "'. Please try again.");
-          }
-          else {
-            localStorage.setItem(queryUrl, text); // Cache search result
-            self.setInfoWindowContent(text);
-          }
-        });
-      }
-    };
-
-    this.close = function() {
-      self.googleInfoWindow.close();
-    };
-
-    this.open = function(googleMap, googleMarker) {
-      self.googleInfoWindow.open(googleMap, googleMarker);
-    };
-
-    self.populateInfoWindow();
-  };
-
+  // The LocationViewModel serves to coordinate behavior on the map.
+  // It knows some of the internals of the Marker, InfoWindow, and Map
+  // in order to have Google trigger events and place items on the map.
   var LocationViewModel = function(marker, infoWindow, map) {
     var self = this;
 
@@ -180,11 +153,16 @@
         self.infoWindow().close();
       }
     });
+
+    this.placeMarkerOnMap = function() {
+      self.googleMarker().setMap(self.googleMap());
+    };
   };
 
 
   var SearchViewModel = function(locations) {
     var self = this;
+
     this.locations = locations;
     this.searchQuery = ko.observable("");
     this.listVisible = ko.observable(false);
@@ -262,16 +240,36 @@
   };
 
   // bind a new instance of our view model to the page
-  var map = new MapViewModel(mapData);
-  var locations = [];
+  var map = new MapViewModel('map-canvas', {
+    center: {lat: 18.3356297, lng: -64.7302395},
+    zoom: 12
+  });
 
+  var markerData = [
+    {
+      title: "Home",
+      position: {lat: 18.35269, lng: -64.7314672}
+    },
+    {
+      title: "Maho Bay Beach",
+      position: {lat: 18.3561342, lng: -64.7457178}
+    },
+    {
+      title: "Low Key Watersports",
+      position: {lat: 18.3302373, lng: -64.7963977}
+    }
+  ];
+
+  var locations = [];
   markerData.forEach(function(markerDatum) {
     var infoWindow = new InfoWindowViewModel(markerDatum.title);
+    infoWindow.populateContent();
+
     var marker = new MarkerViewModel(markerDatum.title, markerDatum.position.lat, markerDatum.position.lng);
     var location = new LocationViewModel(marker, infoWindow, map);
+    location.placeMarkerOnMap();
 
     locations.push(location);
-    map.addMarker(marker);
   });
 
   var searchViewModel = new SearchViewModel(locations);
